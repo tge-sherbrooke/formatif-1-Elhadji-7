@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.9"
-# dependencies = ["adafruit-circuitpython-bmp280", "adafruit-blinka"]
+# dependencies = ["rpi.gpio","adafruit-circuitpython-bmp280", "adafruit-blinka"]
 # ///
 """Test du capteur BMP280 via STEMMA QT/I2C."""
 
