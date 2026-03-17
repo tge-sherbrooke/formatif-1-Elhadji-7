@@ -1,181 +1,114 @@
-name: Formatif F1 - Vérification des tests locaux
-
+name: Formatif F1 - Progressive Milestones
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
   workflow_dispatch:
 
 jobs:
-  verify:
+  autograding:
     runs-on: ubuntu-latest
-
     steps:
-      - name: 📥 Checkout du code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 🔍 Vérifier que les tests ont été exécutés
-        id: check_markers
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pytest
+        run: pip install -q pytest
+
+      # =========================================
+      # MILESTONE 1: Environment Setup (25 points)
+      # =========================================
+      - name: "Milestone 1: Environment Setup (25 pts)"
+        id: milestone-1
+        continue-on-error: true
         run: |
-          echo "Vérification des marqueurs de tests locaux..."
+          echo "=============================================="
+          echo "MILESTONE 1: Environment Setup"
+          echo "=============================================="
           echo ""
-
-          MARKER_DIR=".test_markers"
-          ALL_PASSED=false
-
-          # Vérifier si le dossier des marqueurs existe
-          if [ ! -d "$MARKER_DIR" ]; then
-            echo "❌ ERREUR: Les tests locaux n'ont pas été exécutés!"
-            echo ""
-            echo "📚 Instructions:"
-            echo "   1. Sur le Raspberry Pi, exécutez: python3 run_tests.py"
-            echo "   2. Corrigez les erreurs si nécessaire"
-            echo "   3. Pussez vos modifications: git add, git commit, git push"
-            echo ""
-            exit 1
+          echo "Verifying: script exists, syntax valid, local tests executed"
+          echo ""
+          pytest tests/test_milestone_01.py -v --tb=short
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "milestone_1_passed=true" >> $GITHUB_OUTPUT
           fi
 
-          echo "✅ Dossier des marqueurs trouvé"
-
-          # Compter les marqueurs
-          MARKER_COUNT=$(find "$MARKER_DIR" -name "*.txt" | wc -l)
-          echo "   Marqueurs trouvés: $MARKER_COUNT"
-
-          # Vérifier chaque marqueur
-          if [ -f "$MARKER_DIR/ssh_key_verified.txt" ]; then
-            echo "   ✅ SSH key verified"
-          else
-            echo "   ❌ SSH key NOT verified"
-          fi
-
-          if [ -f "$MARKER_DIR/bmp280_script_verified.txt" ]; then
-            echo "   ✅ BMP280 script verified"
-          else
-            echo "   ❌ BMP280 script NOT verified"
-          fi
-
-          if [ -f "$MARKER_DIR/neoslider_script_verified.txt" ]; then
-            echo "   ✅ NeoSlider script verified"
-          else
-            echo "   ⚠️  NeoSlider script NOT verified (optionnel)"
-          fi
-
-          if [ -f "$MARKER_DIR/hardware_detected.txt" ]; then
-            echo "   ✅ Hardware detected (Raspberry Pi)"
-            cat "$MARKER_DIR/hardware_detected.txt" | grep -E "77|30" | head -2
-          else
-            echo "   ℹ️  Hardware scan non disponible (normal si pas sur Pi)"
-          fi
-
-          # Vérifier que tous les tests obligatoires ont passé
-          if [ -f "$MARKER_DIR/all_tests_passed.txt" ]; then
-            echo ""
-            echo "🎉 TOUS LES TESTS OBLIGATOIRES SONT PASSÉS!"
-            ALL_PASSED=true
-          else
-            echo ""
-            echo "⚠️  Marqueur 'all_tests_passed.txt' manquant"
-            echo "   Assurez-vous d'avoir exécuté: python3 run_tests.py"
-          fi
-
-          # Afficher le résumé
-          if [ -f "$MARKER_DIR/test_summary.txt" ]; then
-            echo ""
-            echo "📊 Résumé des tests:"
-            cat "$MARKER_DIR/test_summary.txt"
-          fi
-
-          # Sauvegarder le résultat pour les étapes suivantes
-          echo "ALL_PASSED=$ALL_PASSED" >> $GITHUB_OUTPUT
-
-      - name: 🔍 Vérifier test_bmp280.py
+      # =========================================
+      # MILESTONE 2: Basic Functionality (35 points)
+      # =========================================
+      - name: "Milestone 2: Basic Functionality (35 pts)"
+        id: milestone-2
+        continue-on-error: true
         run: |
-          echo "Vérification de test_bmp280.py..."
-
-          if [ ! -f "test_bmp280.py" ]; then
-            echo "❌ ERREUR: test_bmp280.py introuvable!"
-            echo "   Créez ce fichier selon les instructions du README.md"
-            exit 1
+          echo "=============================================="
+          echo "MILESTONE 2: Basic Functionality"
+          echo "=============================================="
+          echo ""
+          echo "Verifying: I2C init, sensor creation, temperature/humidity reading"
+          echo ""
+          pytest tests/test_milestone_02.py -v --tb=short
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "milestone_2_passed=true" >> $GITHUB_OUTPUT
           fi
 
-          echo "✅ test_bmp280.py trouvé"
-
-          # Vérifier la syntaxe Python
-          python3 -m py_compile test_bmp280.py
-          echo "✅ Syntaxe Python valide"
-
-      - name: 🔍 Vérifier test_neoslider.py
+      # =========================================
+      # MILESTONE 3: Complete Implementation (40 points)
+      # =========================================
+      - name: "Milestone 3: Complete Implementation (40 pts)"
+        id: milestone-3
         run: |
-          echo "Vérification de test_neoslider.py..."
+          echo "=============================================="
+          echo "MILESTONE 3: Complete Implementation"
+          echo "=============================================="
+          echo ""
+          echo "Verifying: main() function, error handling, code quality"
+          echo ""
+          pytest tests/test_milestone_03.py -v --tb=short
 
-          if [ ! -f "test_neoslider.py" ]; then
-            echo "⚠️  test_neoslider.py introuvable (optionnel)"
-            echo "   Ce fichier est optionnel pour le formatif F1"
-          else
-            echo "✅ test_neoslider.py trouvé"
-            # Vérifier la syntaxe Python
-            python3 -m py_compile test_neoslider.py
-            echo "✅ Syntaxe Python valide"
-          fi
-
-      - name: 📊 Rapport de validation
+      # =========================================
+      # Summary
+      # =========================================
+      - name: Results Summary
         if: always()
         run: |
-          echo "## 📊 Résultat de la validation" >> $GITHUB_STEP_SUMMARY
+          echo ""
+          echo "=============================================="
+          echo "         FORMATIF F1 - RESULTS SUMMARY       "
+          echo "=============================================="
+          echo ""
+          echo "  Milestone 1 (25 pts): ${{ steps.milestone-1.outcome }}"
+          echo "  Milestone 2 (35 pts): ${{ steps.milestone-2.outcome }}"
+          echo "  Milestone 3 (40 pts): ${{ steps.milestone-3.outcome }}"
+          echo ""
+          echo "=============================================="
+          echo ""
+          echo "  Retries illimites!"
+          echo "  Poussez a nouveau pour reessayer."
+          echo ""
+          echo "  Les messages d'erreur indiquent:"
+          echo "    - Ce qui etait attendu"
+          echo "    - Ce qui a ete trouve"
+          echo "    - Une suggestion pour corriger"
+          echo ""
+          echo "=============================================="
+
+      - name: Generate Step Summary
+        if: always()
+        run: |
+          echo "## Formatif F1 - Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Formatif F1** — Introduction au Raspberry Pi et capteurs Adafruit" >> $GITHUB_STEP_SUMMARY
+          echo "| Milestone | Points | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 1. Environment Setup | 25 | ${{ steps.milestone-1.outcome == 'success' && 'PASS' || 'FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 2. Basic Functionality | 35 | ${{ steps.milestone-2.outcome == 'success' && 'PASS' || 'FAIL' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 3. Complete Implementation | 40 | ${{ steps.milestone-3.outcome == 'success' && 'PASS' || 'FAIL' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-
-          if [ -f ".test_markers/all_tests_passed.txt" ]; then
-            echo "### ✅ Tests locaux exécutés avec succès!" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "L'étudiant a:" >> $GITHUB_STEP_SUMMARY
-            echo "- Configuré SSH sans mot de passe" >> $GITHUB_STEP_SUMMARY
-            echo "- Créé le script test_bmp280.py" >> $GITHUB_STEP_SUMMARY
-            echo "- Exécuté les tests localement sur le Raspberry Pi" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "### ⚠️ Tests locaux non exécutés" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "L'étudiant doit exécuter \`python3 run_tests.py\` sur le Raspberry Pi." >> $GITHUB_STEP_SUMMARY
-          fi
-
-      - name: 💬 Commentaire sur le PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-
-            let feedback = "## 🤖 Résultats de la validation - Formatif F1\n\n";
-
-            if (fs.existsSync('.test_markers/all_tests_passed.txt')) {
-              feedback += "### ✅ Tests locaux exécutés avec succès!\n\n";
-              feedback += "Bravo! Vous avez:\n";
-              feedback += "- ✅ Configuré SSH sans mot de passe\n";
-              feedback += "- ✅ Créé le script test_bmp280.py\n";
-              feedback += "- ✅ Exécuté les tests localement sur le Raspberry Pi\n\n";
-              feedback += "Vous pouvez maintenant valider le fonctionnement matériel avec:\n";
-              feedback += "```bash\nuv run test_bmp280.py\nuv run test_neoslider.py\n```\n";
-            } else {
-              feedback += "### ⚠️ Tests locaux non exécutés\n\n";
-              feedback += "Pour compléter le formatif:\n";
-              feedback += "1. Connectez-vous au Raspberry Pi en SSH\n";
-              feedback += "2. Clonez votre dépôt: `git clone <votre-dépôt>`\n";
-              feedback += "3. Exécutez: `python3 run_tests.py`\n";
-              feedback += "4. Corrigez les erreurs si nécessaire\n";
-              feedback += "5. Pussez: `git add . && git commit && git push`\n\n";
-            }
-
-            if (fs.existsSync('.test_markers/test_summary.txt')) {
-              feedback += "### 📊 Détails des tests:\n\n```\n";
-              feedback += fs.readFileSync('.test_markers/test_summary.txt', 'utf8');
-              feedback += "```\n";
-            }
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: feedback
-            });
+          echo "**Retries illimites** - Poussez a nouveau pour reessayer!" >> $GITHUB_STEP_SUMMARY
